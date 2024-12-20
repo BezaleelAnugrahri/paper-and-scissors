@@ -4,57 +4,108 @@ using UnityEngine;
 
 public class RandomMovement : MonoBehaviour
 {
-    public float speed = 1.0f;
-    private Transform target;
-    private bool isMoving;
+    public float moveSpeed = 3f; 
+    public Vector3 targetPosition; 
+    private Bounds areaBounds; 
 
-    // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         
-        
+        GameObject playArea = GameObject.Find("PlayArea"); 
+        areaBounds = playArea.GetComponent<Collider>().bounds;
+
+        SetRandomTargetPosition();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        MoveTo();
+        Movement();
     }
 
     private void OnTriggerEnter(Collider other)
     {
         Debug.LogWarning(other.name);
-        if (other.name == "Rock" && this.gameObject.name != other.name)
+
+        if (other.name.Contains("Wall"))
         {
-            Mesh mf = other.GetComponent<MeshFilter>().mesh;
-            this.gameObject.GetComponent<MeshFilter>().mesh = mf;
+            SetRandomTargetPosition();
         }
-        if (other.name == "Paper" && this.gameObject.name != other.name)
+
+        if (this.gameObject.name.Contains("Scissor"))//if this gameobject is scissor
         {
-            Mesh mf = other.GetComponent<MeshFilter>().mesh;
-            this.gameObject.GetComponent<MeshFilter>().mesh = mf;
+            if (other.name.Contains("Rock"))
+            {
+                Mesh mf = other.GetComponent<MeshFilter>().mesh;
+                this.gameObject.GetComponent<MeshFilter>().mesh = mf;
+                this.gameObject.name = other.name;
+            }
+            if (other.name.Contains("Paper"))
+            {
+                Mesh mf = this.GetComponent<MeshFilter>().mesh;
+                other.gameObject.GetComponent<MeshFilter>().mesh = mf;
+                other.gameObject.name = this.gameObject.name;
+            }
         }
-        if (other.name == "Scisor" && this.gameObject.name != other.name)
+        else if (this.gameObject.name.Contains("Rock"))//if this gameobject is rock
         {
-            Mesh mf = other.GetComponent<MeshFilter>().mesh;
-            this.gameObject.GetComponent<MeshFilter>().mesh = mf;
+            if (other.name.Contains("Paper"))
+            {
+                Mesh mf = other.GetComponent<MeshFilter>().mesh;
+                this.gameObject.GetComponent<MeshFilter>().mesh = mf;
+                this.gameObject.name = other.name;
+            }
+            if (other.name.Contains("Scissor"))
+            {
+                Mesh mf = this.GetComponent<MeshFilter>().mesh;
+                other.gameObject.GetComponent<MeshFilter>().mesh = mf;
+                other.gameObject.name = this.gameObject.name;
+            }
+        }
+        else //if this gameobject is paper
+        {
+            if (other.name.Contains("Scissor"))
+            {
+                Mesh mf = other.GetComponent<MeshFilter>().mesh;
+                this.gameObject.GetComponent<MeshFilter>().mesh = mf;
+                this.gameObject.name = other.name;
+            }
+            if (other.name.Contains("Rock"))
+            {
+                Mesh mf = this.GetComponent<MeshFilter>().mesh;
+                other.gameObject.GetComponent<MeshFilter>().mesh = mf;
+                other.gameObject.name = this.gameObject.name;
+            }
+        }
+
+        
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.name.Contains("Wall"))
+        {
+            SetRandomTargetPosition();
         }
     }
 
-    void MoveTo()
+    void Movement()
     {
-        Rigidbody rb = GetComponent<Rigidbody>();
-        Vector3 randTarget = new Vector3(Random.Range(1, 10), 0, Random.Range(1, 10));
-        var step = speed * Time.deltaTime;
-        if (rb.position != randTarget)
+
+        transform.position = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
+
+        if (Vector3.Distance(transform.position, targetPosition) < 0.1f)
         {
-            rb.position = Vector3.MoveTowards(rb.position, randTarget, step);
-            isMoving = true;
+            SetRandomTargetPosition();
         }
-        else
-        {
-            isMoving = false;
-        }
+    }
+
+    private void SetRandomTargetPosition()
+    {
+        targetPosition = new Vector3(
+            Random.Range(areaBounds.min.x, areaBounds.max.x),
+            transform.position.y,
+            Random.Range(areaBounds.min.z, areaBounds.max.z)
+        );
     }
 
 }
